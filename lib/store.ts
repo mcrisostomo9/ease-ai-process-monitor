@@ -1,75 +1,121 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-export type Result = "COMPLIES" | "DEVIATES" | "UNCLEAR"
+export type Result = 'COMPLIES' | 'DEVIATES' | 'UNCLEAR';
 
 export interface Submission {
-  id: string
-  action: string
-  guideline: string
-  result: Result
-  confidence: number
-  timestamp: string
+  id: string;
+  action: string;
+  guideline: string;
+  result: Result;
+  confidence: number;
+  timestamp: string;
 }
 
 export interface SavedGuideline {
-  id: string
-  name: string
-  text: string
-  createdAt: string
+  id: string;
+  name: string;
+  text: string;
+  createdAt: string;
 }
 
-interface SubmissionStore {
-  submissions: Submission[]
-  currentResult: Submission | null
-  showDialog: boolean
-  savedGuidelines: SavedGuideline[]
-  addSubmission: (submission: Omit<Submission, "id" | "timestamp">) => void
-  setShowDialog: (show: boolean) => void
-  addSavedGuideline: (name: string, text: string) => void
-  removeSavedGuideline: (id: string) => void
-}
+type State = {
+  submissions: Submission[];
+  currentResult: Submission | null;
+  showAnalysisDialog: boolean;
+  savedGuidelines: SavedGuideline[];
+  showSaveDialog: boolean;
+  guidelineName: string;
+};
 
-export const useSubmissionStore = create<SubmissionStore>()(
+type Actions = {
+  actions: {
+    addSubmission: (submission: Omit<Submission, 'id' | 'timestamp'>) => void;
+    openAnalysisDialog: () => void;
+    closeAnalysisDialog: () => void;
+    addSavedGuideline: (name: string, text: string) => void;
+    removeSavedGuideline: (id: string) => void;
+    openSaveDialog: () => void;
+    closeSaveDialog: () => void;
+    updateGuidelineName: (name: string) => void;
+    clearGuidelineName: () => void;
+  };
+};
+
+type Store = State & Actions;
+
+const useSubmissionStore = create<Store>()(
   persist(
     (set) => ({
       submissions: [],
       currentResult: null,
-      showDialog: false,
+      showAnalysisDialog: false,
       savedGuidelines: [],
-      addSubmission: (submission) => {
-        const newSubmission: Submission = {
-          ...submission,
-          id: Date.now().toString(),
-          timestamp: new Date().toISOString(),
-        }
-        set((state) => ({
-          submissions: [newSubmission, ...state.submissions],
-          currentResult: newSubmission,
-          showDialog: true,
-        }))
-      },
-      setShowDialog: (show) => set({ showDialog: show }),
-      addSavedGuideline: (name, text) => {
-        const newGuideline: SavedGuideline = {
-          id: Date.now().toString(),
-          name,
-          text,
-          createdAt: new Date().toISOString(),
-        }
-        set((state) => ({
-          savedGuidelines: [...state.savedGuidelines, newGuideline],
-        }))
-      },
-      removeSavedGuideline: (id) => {
-        set((state) => ({
-          savedGuidelines: state.savedGuidelines.filter((g) => g.id !== id),
-        }))
+      showSaveDialog: false,
+      guidelineName: '',
+      actions: {
+        addSubmission: (submission) =>
+          set((state) => ({
+            submissions: [
+              {
+                ...submission,
+                id: Date.now().toString(),
+                timestamp: new Date().toISOString(),
+              },
+              ...state.submissions,
+            ],
+            currentResult: {
+              ...submission,
+              id: Date.now().toString(),
+              timestamp: new Date().toISOString(),
+            },
+            showAnalysisDialog: true,
+          })),
+        openAnalysisDialog: () => set({ showAnalysisDialog: true }),
+        closeAnalysisDialog: () => set({ showAnalysisDialog: false }),
+        addSavedGuideline: (name, text) =>
+          set((state) => ({
+            savedGuidelines: [
+              ...state.savedGuidelines,
+              {
+                id: Date.now().toString(),
+                name,
+                text,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          })),
+        removeSavedGuideline: (id) =>
+          set((state) => ({
+            savedGuidelines: state.savedGuidelines.filter((g) => g.id !== id),
+          })),
+        openSaveDialog: () => set({ showSaveDialog: true }),
+        closeSaveDialog: () => set({ showSaveDialog: false }),
+        updateGuidelineName: (name) => set({ guidelineName: name }),
+        clearGuidelineName: () => set({ guidelineName: '' }),
       },
     }),
     {
-      name: "process-monitor-storage",
+      name: 'process-monitor-storage',
       partialize: (state) => ({ savedGuidelines: state.savedGuidelines }),
     },
   ),
-)
+);
+
+// Selectors
+export const useSubmissions = () =>
+  useSubmissionStore((state) => state.submissions);
+export const useCurrentResult = () =>
+  useSubmissionStore((state) => state.currentResult);
+export const useShowAnalysisDialog = () =>
+  useSubmissionStore((state) => state.showAnalysisDialog);
+export const useShowSaveDialog = () =>
+  useSubmissionStore((state) => state.showSaveDialog);
+export const useGuidelineName = () =>
+  useSubmissionStore((state) => state.guidelineName);
+export const useSavedGuidelines = () =>
+  useSubmissionStore((state) => state.savedGuidelines);
+
+// Actions
+export const useSubmissionsActions = () =>
+  useSubmissionStore((state) => state.actions);

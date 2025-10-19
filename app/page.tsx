@@ -1,41 +1,15 @@
-'use client';
+"use client"
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import {
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-  BookmarkPlus,
-  Bookmark,
-  Trash2,
-} from 'lucide-react';
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircle2, XCircle, HelpCircle, BookmarkPlus, Bookmark, Trash2 } from "lucide-react"
 import {
   useSubmissions,
   useCurrentResult,
@@ -44,31 +18,35 @@ import {
   useShowSaveDialog,
   useGuidelineName,
   useSavedGuidelines,
-  Result,
-} from '@/lib/store';
-import { submissionSchema, type SubmissionFormData } from '@/lib/validation';
-import { Input } from '@/components/ui/input';
+  useIsLoading,
+  type Result,
+} from "@/lib/store"
+import { submissionSchema, type SubmissionFormData } from "@/lib/validation"
+import { Input } from "@/components/ui/input"
+import { useEffect } from "react"
+import React from "react"
 
 const RESULT_ICONS: Record<Result, React.ReactNode> = {
   COMPLIES: <CheckCircle2 className="h-5 w-5 text-green-600" />,
   DEVIATES: <XCircle className="h-5 w-5 text-red-600" />,
   UNCLEAR: <HelpCircle className="h-5 w-5 text-yellow-600" />,
-};
+}
 
-const RESULT_BADGE_VARIANTS: Record<
-  Result,
-  'default' | 'destructive' | 'secondary'
-> = {
-  COMPLIES: 'default',
-  DEVIATES: 'destructive',
-  UNCLEAR: 'secondary',
-};
-
-// test
+const RESULT_BADGE_VARIANTS: Record<Result, "default" | "destructive" | "secondary"> = {
+  COMPLIES: "default",
+  DEVIATES: "destructive",
+  UNCLEAR: "secondary",
+}
 
 export default function Page() {
-  const showAnalysisDialog = useShowAnalysisDialog();
-  const showSaveDialog = useShowSaveDialog();
+  const showAnalysisDialog = useShowAnalysisDialog()
+  const showSaveDialog = useShowSaveDialog()
+  const actions = useSubmissionsActions()
+
+  useEffect(() => {
+    actions.fetchSubmissions()
+    actions.fetchSavedGuidelines()
+  }, [actions])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
@@ -83,25 +61,23 @@ export default function Page() {
         {showSaveDialog && <SaveGuidelineDialog />}
       </div>
     </div>
-  );
+  )
 }
 
 function Header() {
   return (
     <div className="mb-8">
-      <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-50 mb-2">
-        Ease Process Monitor
-      </h1>
+      <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-50 mb-2">Ease Process Monitor</h1>
       <p className="text-slate-600 dark:text-slate-400 text-lg">
         Evaluate whether actions comply with established guidelines
       </p>
     </div>
-  );
+  )
 }
 
 function SubmissionForm() {
-  const actions = useSubmissionsActions();
-  const savedGuidelines = useSavedGuidelines();
+  const actions = useSubmissionsActions()
+  const savedGuidelines = useSavedGuidelines()
 
   const {
     register,
@@ -112,35 +88,38 @@ function SubmissionForm() {
     formState: { errors },
   } = useForm<SubmissionFormData>({
     resolver: zodResolver(submissionSchema),
-  });
+  })
 
-  const currentGuideline = watch('guideline');
+  const currentGuideline = watch("guideline")
 
-  const onSubmit = (data: SubmissionFormData) => {
-    const results: Result[] = ['COMPLIES', 'DEVIATES', 'UNCLEAR'];
-    const randomResult = results[Math.floor(Math.random() * results.length)];
-    const randomConfidence = Math.random() * 0.3 + 0.7;
+  const onSubmit = async (data: SubmissionFormData) => {
+    const results: Result[] = ["COMPLIES", "DEVIATES", "UNCLEAR"]
+    const randomResult = results[Math.floor(Math.random() * results.length)]
+    const randomConfidence = Math.random() * 0.3 + 0.7
 
-    actions.addSubmission({
+    await actions.addSubmission({
       action: data.action.trim(),
       guideline: data.guideline.trim(),
       result: randomResult,
       confidence: Number.parseFloat(randomConfidence.toFixed(2)),
-    });
+    })
 
-    reset();
-  };
+    reset()
+  }
 
   const handleLoadGuideline = (text: string) => {
-    setValue('guideline', text, { shouldValidate: true });
-  };
+    setValue("guideline", text, { shouldValidate: true })
+  }
+
+  const handleDeleteGuideline = async (id: string | number) => {
+    await actions.removeSavedGuideline(id)
+  }
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle>Submit Action for Analysis</CardTitle>
-        <CardDescription>
-          Enter the action taken and the guideline to evaluate compliance
-        </CardDescription>
+        <CardDescription>Enter the action taken and the guideline to evaluate compliance</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -149,13 +128,11 @@ function SubmissionForm() {
             <Textarea
               id="action"
               placeholder="e.g., Closed ticket #48219 and sent confirmation email"
-              {...register('action')}
-              className={errors.action ? 'border-red-500' : ''}
+              {...register("action")}
+              className={errors.action ? "border-red-500" : ""}
               rows={4}
             />
-            {errors.action && (
-              <p className="text-sm text-red-600">{errors.action.message}</p>
-            )}
+            {errors.action && <p className="text-sm text-red-600">{errors.action.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -166,9 +143,7 @@ function SubmissionForm() {
                 variant="ghost"
                 size="sm"
                 onClick={actions.openSaveDialog}
-                disabled={
-                  !currentGuideline || currentGuideline.trim().length < 10
-                }
+                disabled={!currentGuideline || currentGuideline.trim().length < 10}
                 className="h-8 gap-1.5"
               >
                 <BookmarkPlus className="h-4 w-4" />
@@ -178,19 +153,15 @@ function SubmissionForm() {
             <Textarea
               id="guideline"
               placeholder="e.g., All closed tickets must include a confirmation email"
-              {...register('guideline')}
-              className={errors.guideline ? 'border-red-500' : ''}
+              {...register("guideline")}
+              className={errors.guideline ? "border-red-500" : ""}
               rows={4}
             />
-            {errors.guideline && (
-              <p className="text-sm text-red-600">{errors.guideline.message}</p>
-            )}
+            {errors.guideline && <p className="text-sm text-red-600">{errors.guideline.message}</p>}
 
             {savedGuidelines.length > 0 && (
               <div className="mt-3 space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Saved Guidelines:
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Saved Guidelines:</p>
                 <div className="space-y-1.5">
                   {savedGuidelines.map((guideline) => (
                     <div
@@ -205,17 +176,13 @@ function SubmissionForm() {
                         className="flex-1 justify-start h-auto py-1.5 px-2 font-normal"
                       >
                         <Bookmark className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
-                        <span className="text-sm truncate">
-                          {guideline.name}
-                        </span>
+                        <span className="text-sm truncate">{guideline.name}</span>
                       </Button>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() =>
-                          actions.removeSavedGuideline(guideline.id)
-                        }
+                        onClick={() => handleDeleteGuideline(guideline.id)}
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -233,15 +200,15 @@ function SubmissionForm() {
         </form>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function LatestResult() {
-  const submissions = useSubmissions();
+  const submissions = useSubmissions()
 
   const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString();
-  };
+    return new Date(timestamp).toLocaleString()
+  }
 
   return (
     <Card className="shadow-lg">
@@ -254,10 +221,7 @@ function LatestResult() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               {RESULT_ICONS[submissions[0].result]}
-              <Badge
-                variant={RESULT_BADGE_VARIANTS[submissions[0].result]}
-                className="text-base px-3 py-1"
-              >
+              <Badge variant={RESULT_BADGE_VARIANTS[submissions[0].result]} className="text-base px-3 py-1">
                 {submissions[0].result}
               </Badge>
               <span className="text-sm text-muted-foreground ml-auto">
@@ -266,24 +230,14 @@ function LatestResult() {
             </div>
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Action
-                </p>
-                <p className="text-sm bg-muted p-3 rounded-md">
-                  {submissions[0].action}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Action</p>
+                <p className="text-sm bg-muted p-3 rounded-md">{submissions[0].action}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Guideline
-                </p>
-                <p className="text-sm bg-muted p-3 rounded-md">
-                  {submissions[0].guideline}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Guideline</p>
+                <p className="text-sm bg-muted p-3 rounded-md">{submissions[0].guideline}</p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {formatTimestamp(submissions[0].timestamp)}
-              </p>
+              <p className="text-xs text-muted-foreground">{formatTimestamp(submissions[0].timestamp)}</p>
             </div>
           </div>
         ) : (
@@ -294,32 +248,55 @@ function LatestResult() {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function SubmissionHistory() {
-  const submissions = useSubmissions();
+  const submissions = useSubmissions()
+  const isLoading = useIsLoading()
 
   const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString();
-  };
+    return new Date(timestamp).toLocaleString()
+  }
+
+  if (isLoading) {
+    return (
+      <Card className="mt-8 shadow-lg">
+        <CardHeader>
+          <CardTitle>Submission History</CardTitle>
+          <CardDescription>All analyzed actions and their compliance results</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12 text-muted-foreground">
+            <p>Loading submissions...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (submissions.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>No submissions yet</p>
-        <p className="text-sm mt-2">Submit an action to see results here</p>
-      </div>
-    );
+      <Card className="mt-8 shadow-lg">
+        <CardHeader>
+          <CardTitle>Submission History</CardTitle>
+          <CardDescription>All analyzed actions and their compliance results</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No submissions yet</p>
+            <p className="text-sm mt-2">Submit an action to see results here</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
     <Card className="mt-8 shadow-lg">
       <CardHeader>
         <CardTitle>Submission History</CardTitle>
-        <CardDescription>
-          All analyzed actions and their compliance results
-        </CardDescription>
+        <CardDescription>All analyzed actions and their compliance results</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
@@ -339,20 +316,12 @@ function SubmissionHistory() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {RESULT_ICONS[submission.result]}
-                      <Badge variant={RESULT_BADGE_VARIANTS[submission.result]}>
-                        {submission.result}
-                      </Badge>
+                      <Badge variant={RESULT_BADGE_VARIANTS[submission.result]}>{submission.result}</Badge>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    {submission.action}
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    {submission.guideline}
-                  </TableCell>
-                  <TableCell>
-                    {(submission.confidence * 100).toFixed(0)}%
-                  </TableCell>
+                  <TableCell className="max-w-xs truncate">{submission.action}</TableCell>
+                  <TableCell className="max-w-xs truncate">{submission.guideline}</TableCell>
+                  <TableCell>{(submission.confidence * 100).toFixed(0)}%</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatTimestamp(submission.timestamp)}
                   </TableCell>
@@ -363,13 +332,13 @@ function SubmissionHistory() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function AnalysisDialog() {
-  const { closeAnalysisDialog } = useSubmissionsActions();
-  const currentResult = useCurrentResult();
-  const showAnalysisDialog = useShowAnalysisDialog();
+  const { closeAnalysisDialog } = useSubmissionsActions()
+  const currentResult = useCurrentResult()
+  const showAnalysisDialog = useShowAnalysisDialog()
 
   return (
     <Dialog open={showAnalysisDialog} onOpenChange={closeAnalysisDialog}>
@@ -379,51 +348,64 @@ function AnalysisDialog() {
             {currentResult && RESULT_ICONS[currentResult.result]}
             Analysis Complete
           </DialogTitle>
-          <DialogDescription>
-            The action has been evaluated against the guideline
-          </DialogDescription>
+          <DialogDescription>The action has been evaluated against the guideline</DialogDescription>
         </DialogHeader>
         {currentResult && (
           <div className="space-y-4 py-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Result:</span>
-              <Badge
-                variant={RESULT_BADGE_VARIANTS[currentResult.result]}
-                className="text-base px-3 py-1"
-              >
+              <Badge variant={RESULT_BADGE_VARIANTS[currentResult.result]} className="text-base px-3 py-1">
                 {currentResult.result}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Confidence:</span>
-              <span className="text-sm">
-                {(currentResult.confidence * 100).toFixed(0)}%
-              </span>
+              <span className="text-sm">{(currentResult.confidence * 100).toFixed(0)}%</span>
             </div>
             <div className="pt-2 border-t">
-              <p className="text-sm text-muted-foreground">
-                The submission has been added to your history table.
-              </p>
+              <p className="text-sm text-muted-foreground">The submission has been added to your history table.</p>
             </div>
           </div>
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function SaveGuidelineDialog() {
-  const { updateGuidelineName, closeSaveDialog } = useSubmissionsActions();
-  const showSaveDialog = useShowSaveDialog();
-  const guidelineName = useGuidelineName();
+  const { updateGuidelineName, closeSaveDialog, addSavedGuideline, clearGuidelineName } = useSubmissionsActions()
+  const showSaveDialog = useShowSaveDialog()
+  const guidelineName = useGuidelineName()
+  const [currentGuidelineText, setCurrentGuidelineText] = React.useState("")
+
+  React.useEffect(() => {
+    if (showSaveDialog) {
+      const guidelineTextarea = document.getElementById("guideline") as HTMLTextAreaElement
+      if (guidelineTextarea) {
+        setCurrentGuidelineText(guidelineTextarea.value)
+      }
+    }
+  }, [showSaveDialog])
+
+  const handleSave = async () => {
+    if (guidelineName.trim() && currentGuidelineText.trim()) {
+      await addSavedGuideline(guidelineName.trim(), currentGuidelineText.trim())
+      clearGuidelineName()
+      closeSaveDialog()
+    }
+  }
+
+  const handleClose = () => {
+    clearGuidelineName()
+    closeSaveDialog()
+  }
+
   return (
-    <Dialog open={showSaveDialog} onOpenChange={closeSaveDialog}>
+    <Dialog open={showSaveDialog} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Save Guideline</DialogTitle>
-          <DialogDescription>
-            Give this guideline a name so you can reuse it later
-          </DialogDescription>
+          <DialogDescription>Give this guideline a name so you can reuse it later</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -437,26 +419,20 @@ function SaveGuidelineDialog() {
           </div>
           <div className="space-y-2">
             <Label>Guideline Text</Label>
-            <p className="text-sm bg-muted p-3 rounded-md">
-              {/* {currentGuideline} */}
-              {/* TODO: Add current guideline */}
+            <p className="text-sm bg-muted p-3 rounded-md max-h-32 overflow-y-auto">
+              {currentGuidelineText || "No guideline text"}
             </p>
           </div>
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={closeSaveDialog}>
+            <Button variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                // TODO: Add save guideline
-              }}
-              disabled={!guidelineName.trim()}
-            >
+            <Button onClick={handleSave} disabled={!guidelineName.trim() || !currentGuidelineText.trim()}>
               Save Guideline
             </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

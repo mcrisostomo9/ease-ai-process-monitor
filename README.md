@@ -17,9 +17,8 @@ This application helps organizations ensure their processes are followed correct
 - **Dual Analysis Modes**:
   - Manual: Submit action with custom guideline
   - Preset: Match action against multiple saved guidelines
-- **Comprehensive History**: View all submissions with filtering and pagination
+- **Submission History**: View all submissions with basic pagination and result-based filtering (initial implementation - not fully flushed out yet)
 - **Real-time Results**: Get instant compliance analysis with confidence scores
-- **Modern UI**: Built with Next.js, React, and Tailwind CSS
 
 ## Prerequisites
 
@@ -47,7 +46,13 @@ npm install
 
 ### 3. Environment Configuration
 
-Create a `.env.local` file in the root directory:
+Copy the example environment file and configure your variables:
+
+```bash
+cp .env.example .env.local
+```
+
+Then edit `.env.local` with your actual values:
 
 ```env
 # Database Configuration (Neon Serverless PostgreSQL)
@@ -57,7 +62,7 @@ DATABASE_URL="postgresql://username:password@ep-xxx.us-east-1.aws.neon.tech/ease
 HUGGING_FACE_ACCESS_TOKEN="your_hugging_face_token_here"
 ```
 
-**Note**: This project uses Neon serverless PostgreSQL for quick prototyping and development. You can get a free Neon database at [neon.tech](https://neon.tech/).
+**Note**: This project uses Neon serverless PostgreSQL for quick prototyping and development. You can get a free Neon database at [neon.tech](https://neon.tech/). A Neon dev database URL has been added to the `.env.example` file for immediate use.
 
 ### 4. Hugging Face Setup
 

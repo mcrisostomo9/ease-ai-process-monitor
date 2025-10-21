@@ -242,4 +242,191 @@ describe('SubmissionForm Component', () => {
       expect(guidelineTextarea).toBeInTheDocument();
     });
   });
+
+  // Test Cases from EASE-AI.md Requirements
+  describe('EASE-AI Test Cases', () => {
+    it('should handle Case 1: Closed ticket with confirmation email (COMPLIES)', async () => {
+      const user = userEvent.setup();
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: 1,
+          action: 'Closed ticket #48219 and sent confirmation email',
+          guideline: 'All closed tickets must include a confirmation email',
+          result: 'complies',
+          confidence: '0.94',
+          timestamp: '2025-01-15T10:15:00Z',
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      render(<SubmissionForm guidelines={mockGuidelines} />);
+
+      const actionTextarea = screen.getByLabelText('Action Taken');
+      const guidelineTextarea = screen.getByLabelText('Guideline');
+      const submitButton = screen.getByRole('button', {
+        name: 'Analyze Action',
+      });
+
+      await user.type(
+        actionTextarea,
+        'Closed ticket #48219 and sent confirmation email',
+      );
+      await user.type(
+        guidelineTextarea,
+        'All closed tickets must include a confirmation email',
+      );
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockActions.openAnalysisInProgressDialog).toHaveBeenCalled();
+        expect(fetch).toHaveBeenCalledWith('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'Closed ticket #48219 and sent confirmation email',
+            guideline: 'All closed tickets must include a confirmation email',
+          }),
+        });
+      });
+    });
+
+    it('should handle Case 2: Closed ticket without confirmation email (DEVIATES)', async () => {
+      const user = userEvent.setup();
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: 2,
+          action: 'Closed ticket #48219 without sending confirmation email',
+          guideline: 'All closed tickets must include a confirmation email',
+          result: 'deviates',
+          confidence: '0.92',
+          timestamp: '2025-01-15T10:16:00Z',
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      render(<SubmissionForm guidelines={mockGuidelines} />);
+
+      const actionTextarea = screen.getByLabelText('Action Taken');
+      const guidelineTextarea = screen.getByLabelText('Guideline');
+      const submitButton = screen.getByRole('button', {
+        name: 'Analyze Action',
+      });
+
+      await user.type(
+        actionTextarea,
+        'Closed ticket #48219 without sending confirmation email',
+      );
+      await user.type(
+        guidelineTextarea,
+        'All closed tickets must include a confirmation email',
+      );
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockActions.openAnalysisInProgressDialog).toHaveBeenCalled();
+        expect(fetch).toHaveBeenCalledWith('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'Closed ticket #48219 without sending confirmation email',
+            guideline: 'All closed tickets must include a confirmation email',
+          }),
+        });
+      });
+    });
+
+    it('should handle Case 3: Server reboot without weekly schedule (DEVIATES)', async () => {
+      const user = userEvent.setup();
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: 3,
+          action: 'Rebooted the server and checked logs',
+          guideline:
+            'Servers must be rebooted weekly and logs reviewed after restart',
+          result: 'deviates',
+          confidence: '0.89',
+          timestamp: '2025-01-15T10:17:00Z',
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      render(<SubmissionForm guidelines={mockGuidelines} />);
+
+      const actionTextarea = screen.getByLabelText('Action Taken');
+      const guidelineTextarea = screen.getByLabelText('Guideline');
+      const submitButton = screen.getByRole('button', {
+        name: 'Analyze Action',
+      });
+
+      await user.type(actionTextarea, 'Rebooted the server and checked logs');
+      await user.type(
+        guidelineTextarea,
+        'Servers must be rebooted weekly and logs reviewed after restart',
+      );
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockActions.openAnalysisInProgressDialog).toHaveBeenCalled();
+        expect(fetch).toHaveBeenCalledWith('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'Rebooted the server and checked logs',
+            guideline:
+              'Servers must be rebooted weekly and logs reviewed after restart',
+          }),
+        });
+      });
+    });
+
+    it('should handle Case 4: Action with no relevant guidelines (UNCLEAR)', async () => {
+      const user = userEvent.setup();
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: 4,
+          action: 'Skipped torque confirmation at Station 3',
+          guideline: 'No guidelines exist for this case',
+          result: 'unclear',
+          confidence: '0.78',
+          timestamp: '2025-01-15T10:18:00Z',
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      render(<SubmissionForm guidelines={mockGuidelines} />);
+
+      const actionTextarea = screen.getByLabelText('Action Taken');
+      const guidelineTextarea = screen.getByLabelText('Guideline');
+      const submitButton = screen.getByRole('button', {
+        name: 'Analyze Action',
+      });
+
+      await user.type(
+        actionTextarea,
+        'Skipped torque confirmation at Station 3',
+      );
+      await user.type(guidelineTextarea, 'No guidelines exist for this case');
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockActions.openAnalysisInProgressDialog).toHaveBeenCalled();
+        expect(fetch).toHaveBeenCalledWith('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'Skipped torque confirmation at Station 3',
+            guideline: 'No guidelines exist for this case',
+          }),
+        });
+      });
+    });
+  });
 });

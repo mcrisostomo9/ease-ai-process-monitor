@@ -185,4 +185,111 @@ describe('getAnalysis API Function', () => {
       }),
     );
   });
+
+  // Test Cases from EASE-AI.md Requirements
+  describe('EASE-AI Test Cases', () => {
+    it('should return COMPLIES for Case 1: Closed ticket with confirmation email', async () => {
+      const mockResponse = {
+        labels: ['complies', 'deviates', 'unclear'],
+        scores: [0.94, 0.04, 0.02],
+        sequence:
+          'Action: Closed ticket #48219 and sent confirmation email, \n Guideline: All closed tickets must include a confirmation email',
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockResponse),
+      } as any);
+
+      const result = await getAnalysis(
+        'Closed ticket #48219 and sent confirmation email',
+        'All closed tickets must include a confirmation email',
+      );
+
+      expect(result).toEqual({
+        label: 'complies',
+        score: 0.94,
+        sequence:
+          'Action: Closed ticket #48219 and sent confirmation email, \n Guideline: All closed tickets must include a confirmation email',
+      });
+    });
+
+    it('should return DEVIATES for Case 2: Closed ticket without confirmation email', async () => {
+      const mockResponse = {
+        labels: ['deviates', 'complies', 'unclear'],
+        scores: [0.92, 0.06, 0.02],
+        sequence:
+          'Action: Closed ticket #48219 without sending confirmation email, \n Guideline: All closed tickets must include a confirmation email',
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockResponse),
+      } as any);
+
+      const result = await getAnalysis(
+        'Closed ticket #48219 without sending confirmation email',
+        'All closed tickets must include a confirmation email',
+      );
+
+      expect(result).toEqual({
+        label: 'deviates',
+        score: 0.92,
+        sequence:
+          'Action: Closed ticket #48219 without sending confirmation email, \n Guideline: All closed tickets must include a confirmation email',
+      });
+    });
+
+    it('should return DEVIATES for Case 3: Server reboot without weekly schedule', async () => {
+      const mockResponse = {
+        labels: ['deviates', 'complies', 'unclear'],
+        scores: [0.89, 0.08, 0.03],
+        sequence:
+          'Action: Rebooted the server and checked logs, \n Guideline: Servers must be rebooted weekly and logs reviewed after restart',
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockResponse),
+      } as any);
+
+      const result = await getAnalysis(
+        'Rebooted the server and checked logs',
+        'Servers must be rebooted weekly and logs reviewed after restart',
+      );
+
+      expect(result).toEqual({
+        label: 'deviates',
+        score: 0.89,
+        sequence:
+          'Action: Rebooted the server and checked logs, \n Guideline: Servers must be rebooted weekly and logs reviewed after restart',
+      });
+    });
+
+    it('should return UNCLEAR for Case 4: Action with no relevant guidelines', async () => {
+      const mockResponse = {
+        labels: ['unclear', 'complies', 'deviates'],
+        scores: [0.78, 0.12, 0.1],
+        sequence:
+          'Action: Skipped torque confirmation at Station 3, \n Guideline: No guidelines exist for this case',
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockResponse),
+      } as any);
+
+      const result = await getAnalysis(
+        'Skipped torque confirmation at Station 3',
+        'No guidelines exist for this case',
+      );
+
+      expect(result).toEqual({
+        label: 'unclear',
+        score: 0.78,
+        sequence:
+          'Action: Skipped torque confirmation at Station 3, \n Guideline: No guidelines exist for this case',
+      });
+    });
+  });
 });

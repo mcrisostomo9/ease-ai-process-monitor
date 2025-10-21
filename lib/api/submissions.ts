@@ -48,7 +48,7 @@ export const getSubmissions = async (params?: GetSubmissionsParams) => {
   const page = params?.pagination?.page || 1;
   const limit = params?.pagination?.limit || 10;
   const offset = (page - 1) * limit;
-  console.log(params?.filters?.result);
+
   const whereConditions = [];
   if (params?.filters?.result && params.filters.result !== 'all') {
     whereConditions.push(eq(submissionsTable.result, params.filters.result));

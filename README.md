@@ -2,6 +2,10 @@
 
 A lightweight Process Monitor that evaluates whether actions taken during a process comply with established guidelines using AI analysis.
 
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://ease-ai-process-monitor.vercel.app/)
+
+**Live Demo**: [https://ease-ai-process-monitor.vercel.app/](https://ease-ai-process-monitor.vercel.app/)
+
 ## Overview
 
 This application helps organizations ensure their processes are followed correctly by:
@@ -88,6 +92,12 @@ pnpm db:studio
 
 ## How to Run the Project
 
+### Live Demo
+
+The application is deployed and available at: **[https://ease-ai-process-monitor.vercel.app/](https://ease-ai-process-monitor.vercel.app/)**
+
+You can test the application immediately without any setup by visiting the live demo.
+
 ### Development Mode
 
 ```bash
@@ -106,6 +116,15 @@ pnpm build
 # Start the production server
 pnpm start
 ```
+
+### Deployment
+
+This project is automatically deployed to Vercel. The deployment includes:
+
+- **Automatic builds** on every push to main branch
+- **Environment variables** configured for production
+- **Database connection** to Neon serverless PostgreSQL
+- **Hugging Face API** integration for AI analysis
 
 ### Database Management
 

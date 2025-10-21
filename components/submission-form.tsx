@@ -21,7 +21,6 @@ import {
   type SubmissionFormData,
   type ClassifySubmissionFormData,
 } from '@/lib/zod/submission-form';
-import { Spinner } from '@/components/ui/spinner';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Guideline } from '@/db/schemas/guidelines';
@@ -156,7 +155,7 @@ function SingleGuidelineSubmissionForm({
         size="lg"
         disabled={formState.isSubmitting || !formState.isValid}
       >
-        {formState.isSubmitting ? <Spinner /> : 'Analyze Action'}
+        Analyze Action
       </Button>
     </form>
   );
@@ -264,7 +263,7 @@ function ClassifyForm({ guidelines }: { guidelines: Array<Guideline> }) {
         size="lg"
         disabled={formState.isSubmitting || guidelineIds.length === 0}
       >
-        {formState.isSubmitting ? <Spinner /> : 'Analyze Action'}
+        Analyze Action
       </Button>
     </form>
   );

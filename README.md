@@ -66,7 +66,7 @@ DATABASE_URL="postgresql://username:password@ep-xxx.us-east-1.aws.neon.tech/ease
 HUGGING_FACE_ACCESS_TOKEN="your_hugging_face_token_here"
 ```
 
-**Note**: This project uses Neon serverless PostgreSQL for quick prototyping and development. You can get a free Neon database at [neon.tech](https://neon.tech/). A Neon dev database URL has been added to the `.env.example` file for immediate use.
+**Note**: This project uses [Neon serverless PostgreSQL](https://neon.tech/) for quick prototyping and development. A Neon dev database URL has been added to the `.env.example` file for immediate use. **Note: This is only exposed for quick local setup and evaluation - I wouldn't normally include a shared database URL in an actual project.**
 
 ### 4. Hugging Face Setup
 

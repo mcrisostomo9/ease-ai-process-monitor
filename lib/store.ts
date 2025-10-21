@@ -1,161 +1,140 @@
-import { create } from "zustand"
-
-export type Result = "COMPLIES" | "DEVIATES" | "UNCLEAR"
-
-export interface Submission {
-  id: string | number
-  action: string
-  guideline: string
-  result: Result
-  confidence: number
-  timestamp: string
-}
-
-export interface SavedGuideline {
-  id: string | number
-  name: string
-  text: string
-  createdAt: string
-}
+import { create } from 'zustand';
+import { SubmissionWithGuideline } from '@/lib/api/submissions';
+import { Guideline } from '../db/schemas/guidelines';
 
 type State = {
-  submissions: Submission[]
-  currentResult: Submission | null
-  showAnalysisDialog: boolean
-  savedGuidelines: SavedGuideline[]
-  showSaveDialog: boolean
-  guidelineName: string
-  isLoading: boolean
-}
+  submissions: SubmissionWithGuideline[];
+  currentResult: SubmissionWithGuideline | null;
+  showAnalysisDialog: boolean;
+  showAnalysisInProgressDialog: boolean;
+  showClassifyAnalysisDialog: boolean;
+  currentClassifyResult: SubmissionWithGuideline | null;
+  guidelines: Guideline[];
+  showSaveDialog: boolean;
+  guidelineName: string;
+  isLoading: boolean;
+  showSubmissionDetailDialog: boolean;
+  currentSubmissionDetail: SubmissionWithGuideline | null;
+};
 
 type Actions = {
   actions: {
-    addSubmission: (submission: Omit<Submission, "id" | "timestamp">) => Promise<void>
-    fetchSubmissions: () => Promise<void>
-    openAnalysisDialog: () => void
-    closeAnalysisDialog: () => void
-    addSavedGuideline: (name: string, text: string) => Promise<void>
-    removeSavedGuideline: (id: string | number) => Promise<void>
-    fetchSavedGuidelines: () => Promise<void>
-    openSaveDialog: () => void
-    closeSaveDialog: () => void
-    updateGuidelineName: (name: string) => void
-    clearGuidelineName: () => void
-    setSubmissions: (submissions: Submission[]) => void
-    setSavedGuidelines: (guidelines: SavedGuideline[]) => void
-    setLoading: (loading: boolean) => void
-  }
-}
+    openAnalysisDialog: (submission: SubmissionWithGuideline) => void;
+    closeAnalysisDialog: () => void;
+    openAnalysisInProgressDialog: () => void;
+    closeAnalysisInProgressDialog: () => void;
+    openClassifyAnalysisDialog: (submission: SubmissionWithGuideline) => void;
+    closeClassifyAnalysisDialog: () => void;
+    openSaveDialog: () => void;
+    closeSaveDialog: () => void;
+    updateGuidelineName: (name: string) => void;
+    clearGuidelineName: () => void;
+    setSubmissions: (submissions: SubmissionWithGuideline[]) => void;
+    setGuidelines: (guidelines: Guideline[]) => void;
+    addGuideline: (name: string, text: string) => Promise<void>;
+    setLoading: (loading: boolean) => void;
+    openSubmissionDetailDialog: (submission: SubmissionWithGuideline) => void;
+    closeSubmissionDetailDialog: () => void;
+  };
+};
 
-type Store = State & Actions
+type Store = State & Actions;
 
 const useSubmissionStore = create<Store>()((set) => ({
   submissions: [],
   currentResult: null,
   showAnalysisDialog: false,
-  savedGuidelines: [],
+  showAnalysisInProgressDialog: false,
+  showClassifyAnalysisDialog: false,
+  currentClassifyResult: null,
+  guidelines: [],
   showSaveDialog: false,
-  guidelineName: "",
+  guidelineName: '',
   isLoading: false,
+  showSubmissionDetailDialog: false,
+  currentSubmissionDetail: null,
   actions: {
-    addSubmission: async (submission) => {
-      try {
-        const response = await fetch("/api/submissions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(submission),
-        })
-
-        if (!response.ok) throw new Error("Failed to create submission")
-
-        const newSubmission = await response.json()
-
-        set((state) => ({
-          submissions: [newSubmission, ...state.submissions],
-          currentResult: newSubmission,
-          showAnalysisDialog: true,
-        }))
-      } catch (error) {
-        console.error("[v0] Error adding submission:", error)
-      }
-    },
-    fetchSubmissions: async () => {
-      try {
-        set({ isLoading: true })
-        const response = await fetch("/api/submissions")
-        if (!response.ok) throw new Error("Failed to fetch submissions")
-        const submissions = await response.json()
-        set({ submissions })
-      } catch (error) {
-        console.error("[v0] Error fetching submissions:", error)
-      } finally {
-        set({ isLoading: false })
-      }
-    },
-    openAnalysisDialog: () => set({ showAnalysisDialog: true }),
+    openAnalysisDialog: (submission) =>
+      set({
+        currentResult: submission,
+        showAnalysisDialog: true,
+        showAnalysisInProgressDialog: false,
+      }),
     closeAnalysisDialog: () => set({ showAnalysisDialog: false }),
-    addSavedGuideline: async (name, text) => {
-      try {
-        const response = await fetch("/api/guidelines", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, text }),
-        })
-
-        if (!response.ok) throw new Error("Failed to create guideline")
-
-        const newGuideline = await response.json()
-
-        set((state) => ({
-          savedGuidelines: [newGuideline, ...state.savedGuidelines],
-        }))
-      } catch (error) {
-        console.error("[v0] Error adding guideline:", error)
-      }
-    },
-    removeSavedGuideline: async (id) => {
-      try {
-        const response = await fetch(`/api/guidelines/${id}`, {
-          method: "DELETE",
-        })
-
-        if (!response.ok) throw new Error("Failed to delete guideline")
-
-        set((state) => ({
-          savedGuidelines: state.savedGuidelines.filter((g) => g.id !== id),
-        }))
-      } catch (error) {
-        console.error("[v0] Error removing guideline:", error)
-      }
-    },
-    fetchSavedGuidelines: async () => {
-      try {
-        const response = await fetch("/api/guidelines")
-        if (!response.ok) throw new Error("Failed to fetch guidelines")
-        const guidelines = await response.json()
-        set({ savedGuidelines: guidelines })
-      } catch (error) {
-        console.error("[v0] Error fetching guidelines:", error)
-      }
-    },
+    openAnalysisInProgressDialog: () =>
+      set({ showAnalysisInProgressDialog: true, showAnalysisDialog: false }),
+    closeAnalysisInProgressDialog: () =>
+      set({ showAnalysisInProgressDialog: false }),
+    openClassifyAnalysisDialog: (submission) =>
+      set({
+        currentClassifyResult: submission,
+        showClassifyAnalysisDialog: true,
+        showAnalysisInProgressDialog: false,
+      }),
+    closeClassifyAnalysisDialog: () =>
+      set({ showClassifyAnalysisDialog: false }),
     openSaveDialog: () => set({ showSaveDialog: true }),
     closeSaveDialog: () => set({ showSaveDialog: false }),
     updateGuidelineName: (name) => set({ guidelineName: name }),
-    clearGuidelineName: () => set({ guidelineName: "" }),
+    clearGuidelineName: () => set({ guidelineName: '' }),
     setSubmissions: (submissions) => set({ submissions }),
-    setSavedGuidelines: (guidelines) => set({ savedGuidelines: guidelines }),
+    setGuidelines: (guidelines) => set({ guidelines: guidelines }),
+    addGuideline: async (name, text) => {
+      try {
+        const response = await fetch('/api/guidelines', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, text }),
+        });
+
+        if (!response.ok) throw new Error('Failed to save guideline');
+
+        const newGuideline = await response.json();
+        set((state) => ({
+          guidelines: [...state.guidelines, newGuideline],
+        }));
+      } catch (error) {
+        console.error('Error saving guideline:', error);
+        throw error;
+      }
+    },
     setLoading: (loading) => set({ isLoading: loading }),
+    openSubmissionDetailDialog: (submission) =>
+      set({
+        currentSubmissionDetail: submission,
+        showSubmissionDetailDialog: true,
+      }),
+    closeSubmissionDetailDialog: () =>
+      set({ showSubmissionDetailDialog: false }),
   },
-}))
+}));
 
 // Selectors
-export const useSubmissions = () => useSubmissionStore((state) => state.submissions)
-export const useCurrentResult = () => useSubmissionStore((state) => state.currentResult)
-export const useShowAnalysisDialog = () => useSubmissionStore((state) => state.showAnalysisDialog)
-export const useShowSaveDialog = () => useSubmissionStore((state) => state.showSaveDialog)
-export const useGuidelineName = () => useSubmissionStore((state) => state.guidelineName)
-export const useSavedGuidelines = () => useSubmissionStore((state) => state.savedGuidelines)
-export const useIsLoading = () => useSubmissionStore((state) => state.isLoading)
+export const useSubmissions = () =>
+  useSubmissionStore((state) => state.submissions);
+export const useCurrentResult = () =>
+  useSubmissionStore((state) => state.currentResult);
+export const useShowAnalysisDialog = () =>
+  useSubmissionStore((state) => state.showAnalysisDialog);
+export const useShowAnalysisInProgressDialog = () =>
+  useSubmissionStore((state) => state.showAnalysisInProgressDialog);
+export const useShowClassifyAnalysisDialog = () =>
+  useSubmissionStore((state) => state.showClassifyAnalysisDialog);
+export const useCurrentClassifyResult = () =>
+  useSubmissionStore((state) => state.currentClassifyResult);
+export const useShowSaveDialog = () =>
+  useSubmissionStore((state) => state.showSaveDialog);
+export const useGuidelineName = () =>
+  useSubmissionStore((state) => state.guidelineName);
+export const useGuidelines = () =>
+  useSubmissionStore((state) => state.guidelines);
+export const useIsLoading = () =>
+  useSubmissionStore((state) => state.isLoading);
+export const useShowSubmissionDetailDialog = () =>
+  useSubmissionStore((state) => state.showSubmissionDetailDialog);
+export const useCurrentSubmissionDetail = () =>
+  useSubmissionStore((state) => state.currentSubmissionDetail);
 
 // Actions
-export const useSubmissionsActions = () => useSubmissionStore((state) => state.actions)
+export const useSubmissionsActions = () =>
+  useSubmissionStore((state) => state.actions);
